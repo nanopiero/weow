@@ -13,11 +13,11 @@ from shutil import copyfile
 import matplotlib.pyplot as plt
 import torch.nn as nn
 from torchvision import datasets, models, transforms
-from coca.utils.archis_mtl import *
+#from coca.utils.archis_mtl import *
 import re
 import json
 
-#%%###############nouvelles fonctions utiles:
+
 class mtl_fc(nn.Module):
 
     def __init__(self, in_features=512, out_features=2, bias=True, nb_adparams = 4):
@@ -433,8 +433,6 @@ def charge_model(arch,nchannels, nclasses,models_dir, nb_adparams = 16):
         
         
         #% In case of denseNet: hierarchy is different in the new version of torchvision
-
-        
         modify_state_dict(checkpoint['state_dict'])
         state_dict = {str.replace(k,'module.',''): v for k,v in checkpoint['state_dict'].items()}
         model.load_state_dict(state_dict)
@@ -609,7 +607,6 @@ def get_nclasses(attributes_):
         nclasses += len(classes[attribute])
     return nclasses
 
-
         
 def get_model_suffixe(attributes_):
     suf = ''
@@ -689,7 +686,6 @@ def clean_lbls(lbls,exclusion_cases):  #exclusion_cases: dic atttribute - class 
         del lbls[name]
         
 
-
 def invert_edges(edges):
     inverted_edges = set()
     for edge in edges:
@@ -700,244 +696,3 @@ def edges_and_inverted_edges(edges):
     edges = set(edges)
     inverted_edges = invert_edges(edges)
     return edges.union(inverted_edges)
-#%%###############anciennes Fonctions utiles
-
-"""
-def voir_mat(data2, fig, min_scale=-10,max_scale=70):
-
-    ax = fig.add_subplot(1,1,1)
-    ax.set_aspect('equal')
-    plt.imshow(data2, interpolation='nearest', cmap=plt.cm.ocean) #cmap=plt.cm.rainbow)
-    plt.clim(min_scale,max_scale)
-    plt.colorbar()
-    plt.show()
-    
-def voir_tens(image, fig, min_scale=-10,max_scale=70):
-    im=image[0,0,:,:].numpy()
-    ax = fig.add_subplot(1,1,1)
-    ax.set_aspect('equal')
-    plt.imshow(im, interpolation='nearest',  cmap=plt.cm.ocean) #cmap=plt.cm.rainbow)
-    plt.clim(min_scale,max_scale)
-    plt.colorbar()
-    plt.show()
-    
-    
-
-    
-    
-
-def conc(image1,image2,dim=3):
-    return torch.cat((image1,image2), dim) #, out=None) 
-
-def multi_conc(L,dim=1,ecart=5):
-    image1=L[0]
-    for i in range(1, len(L)):
-        if dim==1:
-            sep=0.5+0*image1[:,0:ecart]
-        elif dim==0:
-            sep=0.5+0*image1[0:ecart,:]
-        image1=conc(image1,sep,dim)
-        image2=L[i]
-        image1=conc(image1,image2,dim=dim)
-    return image1
-
-def images_from_indices(rep_radar,indices,k=0):
-    L=[]
-    for i in range(0, len(indices)):
-        fic=os.listdir(rep_radar)[indices[i]]
-        image=torch.load(rep_radar+'/'+fic)[k,:,:]
-        L.append(image)
-    return L
-
-
-def images_from_indices2(rep_radar,indices,k=0):
-    L=[]
-    for i in range(0, len(indices)):
-        fic=os.listdir(rep_radar)[indices[i]]
-        image=torch.load(rep_radar+'/'+fic)[k,:,:]
-        L.append(image)
-    return L
-
-
-def images_from_tenseur(tens):
-    len_batch=tens.shape[0]
-    L=[]
-    for i in range(len_batch):
-        L.append(tens[i,0,:,:])
-    return L
-
-
-
-
-def images_from_tenseur2(tens, k=0):
-    len_batch=tens.shape[0]
-    L=[]
-    for i in range(len_batch):
-        L.append(tens[i,k,:,:])
-    return L
-
-
-def voir_fichiers2(rep_radar,indices, fig, k=0, min_scale=-10,max_scale=70,dim=1):
-    L=images_from_indices2(rep_radar,indices,k)
-    image=multi_conc(L,dim)
-    voir_mat(image, fig, min_scale,max_scale)
- 
-"""
-def voir_fichiers(rep_radar,indices, fig, min_scale=-10,max_scale=70,dim=1):
-    fic=os.listdir(rep_radar)[indices[0]]
-    image1=torch.load(rep_radar+'/'+fic)
-    for i in range(1, len(indices)):
-        barre_vert=0*image1[:,5]
-        image1=conc(image1,barre_vert,dim)
-        fic=os.listdir(rep_radar)[indices[i]]
-        image2=torch.load(rep_radar+'/'+fic)
-        image1=conc(image1,image2,dim)
-    voir_mat(image1, fig, min_scale=-10,max_scale=70)
-"""    
-    
-def voir_fichiers2D(rep_radar,indices,nx, fig, k=0, min_scale=-10,max_scale=70):
-    L=images_from_indices(rep_radar,indices,k)
-    image1=multi_conc(L[0:nx],dim=1)
-    for i in range(1,int(len(indices)/nx)):
-        image2=multi_conc(L[i*nx:(i+1)*nx],dim=1)
-        image1=multi_conc([image1,image2],dim=0)
-    voir_mat(image1, fig, min_scale,max_scale)   
-
-def voir_batch2D(tens, nx, fig,k=0, min_scale=-10,max_scale=1):
-    L=images_from_tenseur2(tens,k)
-    image1=multi_conc(L[0:nx],dim=1)
-    for i in range(1,int(len(L)/nx)):
-        image2=multi_conc(L[i*nx:(i+1)*nx],dim=1)
-        image1=multi_conc([image1,image2],dim=0)
-    voir_mat(image1, fig, min_scale,max_scale)   
-    
-    
-def voir_result2D(tens,out, nx, fig, k=0, min_scale=-10,max_scale=70, Sous_liste=None):
-    Lin=images_from_tenseur2(tens, k)
-    Lout=images_from_tenseur2(out, k)
-    image1=multi_conc(Lin[0:nx],dim=1)
-    image2=multi_conc(Lout[0:nx],dim=1)
-    image=multi_conc([image1,image2],dim=0)
-    for i in range(1,int(len(Lin)/nx)):
-        image1=multi_conc(Lin[i*nx:(i+1)*nx],dim=1)
-        image2=multi_conc(Lout[i*nx:(i+1)*nx],dim=1)
-        image=multi_conc([image,image1],dim=0,ecart=20)
-        image=multi_conc([image,image2],dim=0)
-    voir_mat(image, fig, min_scale,max_scale)
-    
-    
-    
-def voir_segment2D(tens,out, target, nx, fig, k=0, min_scale=-10,max_scale=70,Sous_liste=None):
-    Lin=images_from_tenseur2(tens,k)
-    Lout=images_from_tenseur2(out,k)
-    Ltarget=images_from_tenseur(target)
-    image1=multi_conc(Lin[0:nx],dim=1)
-    image2=multi_conc(Lout[0:nx],dim=1)
-    image3=multi_conc(Ltarget[0:nx],dim=1)
-    image=multi_conc([image1,image2,image3],dim=0)
-    for i in range(1,int(len(Lin)/nx)):
-        image1=multi_conc(Lin[i*nx:(i+1)*nx],dim=1)
-        image2=multi_conc(Lout[i*nx:(i+1)*nx],dim=1)
-        image3=multi_conc(Ltarget[i*nx:(i+1)*nx],dim=1)
-        image=multi_conc([image,image1],dim=0,ecart=20)
-        image=multi_conc([image,image2],dim=0)
-        image=multi_conc([image,image3],dim=0)
-    voir_mat(image, fig, min_scale,max_scale)
-
-
-
-
-
-
-def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
-    torch.save(state, filename)
-    if is_best:
-        copyfile(filename, 'model_best.pth.tar')
-        
-
-def load_archi(pt,segmenter=False):   #name: nom de l'experience, k: rang de la variable
-    rac_archis = pt['rac_archis']
-    
-    if segmenter:
-        index=pt['load_segmenter'][2]
-        name = rac_archis+pt['load_segmenter'][1]        
-    else:
-        index=pt['load_archi'][2]
-        name = rac_archis+pt['load_archi'][1]
-    experience=torch.load(name)   
-    return experience['archis'][index]
-
-
-def BCELoss_List(out, target):
-    mb,var,sec,rg = out.size()
-    L=[]
-    loss=nn.BCELoss()
-    for i in range(mb):
-        #np.concatenate(L,
-        L.append(loss(Variable(out[[i],:,:,:]),Variable(target[[i],:,:,:])).data[0])
-    L=np.asarray(L)
-    return L
-
-def extrapole(vec, modele):
-    out=0*np.array(modele)
-    rapport= int(len(modele)/len(vec))
-    for i in range(len(vec)):
-        out[rapport*i:rapport*(i+1)]=vec[i]
-    return out
-
-
-def extract_train_val_test(name):
-    out=np.load(name)
-    return out
-
-def save_train_val_test(learn_indices, val_indices, test_indices, name):
-    #learn_indices=np.array(learn_indices)
-    #val_indices=np.array(val_indices)
-    #test_indices=np.array(test_indices)
-    np.save(name, [learn_indices, val_indices, test_indices])
-
-def save_experience(experience,name, complete=True):
-    if os.path.exists(name) and complete:
-        experience0=torch.load(name)
-        experience['variable'] = experience0['variable'] + experience['variable']
-        experience['images'] = experience0['images'] + experience['images']
-        experience['xs'] = experience0['xs'] + experience['xs']
-        experience['ys'] = experience0['ys'] + experience['ys']
-        experience['times'] = experience0['times'] + experience['times']
-        experience['epochs'] = experience0['epochs'] +experience['epochs']
-        experience['val_loss']= experience0['val_loss']+experience['val_loss']
-        experience['std_val_losses']= experience0['std_val_losses']+experience['std_val_losses']
-        if 'last_pt' in experience0.keys():
-            experience['last_pt']= experience0['last_pt']+experience['last_pt']
-        if 'archis' in experience0.keys():
-            experience['archis']= experience0['archis']+experience['archis']        
-        if 'list_val_loss' in experience0.keys():
-            experience['list_val_loss']= experience0['list_val_loss']+experience['list_val_loss']              
-        torch.save(experience,name)
-    else:
-        torch.save(experience,name)
- 
-
-def cut_fringes(x):
-    size1,size2 = x.size()[-2:]
-    periph = 12
-    if x.dim()==4:
-        return x[:,:,periph:size1-periph,periph:size2-periph]
-    elif x.dim()==2:
-        return x[periph:size1-periph,periph:size2-periph]        
-    elif x.dim()==3:
-        return x[:,periph:size1-periph,periph:size2-periph]        
-
-
-
-
-
-
-
-#def minus_db(A,noise):
-#    res=(0.1*A).exp()-(0.1*noise).exp()+0.0001
-#    res=10*res.log()
-#    res[res<-9]=-9
-#    return res
-        
-"""
