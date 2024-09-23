@@ -124,7 +124,7 @@ def load_model(model_name):
 
 # Viz
 
-def show_image(index):
+def show_image(index, image_files):
     img_path = os.path.join('webcam_images', image_files[index])
     img = Image.open(img_path)
     plt.imshow(img)
@@ -139,7 +139,7 @@ def display_image(image_path):
         img = img.resize((int(img.width * 0.5), int(img.height * 0.5)))  # Resize the image by 50%
         display(img)  # Display the resized image using IPython.display
 
-def show_image_from_index(index):
+def show_image_from_index(index, images):
     # Create a new color list and update all intervals
     new_colors = ['gray'] * len(images)  # Reset all intervals to gray
     new_colors[index] = 'red'  # Highlight the selected interval in red
